@@ -7,8 +7,8 @@
 //
 
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 //#define LOG(x) Clock.PrintTime(); fprintf(stderr, "***LOG %s(): %s", __func__, x);
 //#define ERR(x) Clock.PrintTime(); fprintf(stderr, "***ERR %s(): %s\n", __func__, x); exit(-1);
@@ -18,14 +18,16 @@
 
 using namespace std;
 
-extern string WeaponName[];
-extern string WarriorName[];
-extern string ColourName[];
-extern int Elements[];
-extern int Forces[];
-extern int cities;
-extern int stop_time;
-extern bool stop;
+string WeaponName[3] = {"bomb", "arrow", "sword"};
+string WarriorName[5] = {"dragon", "ninja", "iceman", "lion", "wolf"};
+string ColourName[3] = {"*ndef*", "red", "blue"};
+
+int Elements[5];
+int Forces[5];
+
+int cities;
+int stop_time;
+bool stop;
 
 enum WeaponNo {bomb, arrow, sword};
 enum WarriorNo {dragon, ninja, iceman, lion, wolf};
@@ -34,7 +36,6 @@ enum FlagState {na, red1, red2, blue1, blue2};
 enum Colour {ndef, cred, cblue};
 
 class Time;
-extern Time Clock;
 
 class Weapon;
 class Sword;
@@ -61,7 +62,7 @@ public:
     Time & operator++();
     bool operator<=(int minutes);
     int get_minute();
-};
+} Clock;
 
 class Weapon {
 protected:
@@ -85,6 +86,8 @@ public:
     virtual void Blunt() {
         ERR("Weapon::Blunt() called.");
     }
+    
+    virtual ~Weapon() {}
 };
 
 class Sword : public Weapon {
@@ -94,6 +97,8 @@ public:
     Sword(int warrior_force);
     virtual int SwordForce();
     virtual void Blunt();
+    
+    virtual ~Sword() {}
 };
 
 class Arrow : public Weapon {
@@ -105,11 +110,15 @@ public:
     
     virtual int Left();
     virtual void Use();
+    
+    virtual ~Arrow() {}
 };
 
 class Bomb : public Weapon {
 public:
     Bomb();
+    
+    virtual ~Bomb() {}
 };
 
 class Warrior {
@@ -196,6 +205,8 @@ public:
     void Awarded();
     
     void GetFromLion(int e);
+    
+    virtual ~Warrior() {}
 };
 
 class Dragon : public Warrior {
@@ -222,6 +233,8 @@ public:
     virtual void MoraleDown();
     
     virtual bool Yell();
+    
+    virtual ~Dragon() {}
 };
 
 class Ninja : public Warrior {
@@ -243,6 +256,8 @@ public:
     
     virtual int SwordForce();
     virtual void SwordBlunt();
+    
+    virtual ~Ninja() {}
 };
 
 class Iceman : public Warrior {
@@ -267,6 +282,8 @@ public:
     
     virtual int SwordForce();
     virtual void SwordBlunt();
+    
+    virtual ~Iceman() {}
 };
 
 class Lion : public Warrior {
@@ -293,6 +310,8 @@ public:
     virtual void SwordBlunt();
     
     virtual void LoyaltyDown();
+    
+    virtual ~Lion() {}
 };
 
 class Wolf : public Warrior {
@@ -317,6 +336,8 @@ public:
     virtual void SwordBlunt();
     
     virtual void GainWeapon(Warrior * w);
+    
+    virtual ~Wolf() {}
 };
 
 class City{
@@ -371,6 +392,8 @@ public:
     
     int RedCollect();
     int BlueCollect();
+    
+    virtual ~City() {}
 };
 
 class Headquarter{
@@ -393,8 +416,8 @@ public:
     
     // virtual void March();
     // 此句导致连接错误
-    // 虚函数用于子类和父类对于同一个函数名有不同定义，且需要程序根据*引用或指针*的类型自动判断调用哪一个定义的情况
-    // 即使不使用 virtual 关键字，程序也可以根据*对象*的类型判断调用哪一个定义
+    // 虚函数用于子类和父类对于同一个函数名有不同定义，且需要编译器根据*引用或指针*的类型自动判断调用哪一个定义的情况
+    // 即使不使用 virtual 关键字，编译器也可以根据*对象*的类型判断调用哪一个定义
     // 父类的虚函数被子类重载时，可以不写 virtual 关键字，程序自动将其定义为虚函数
     
     void Occupied(Warrior * enemy);
@@ -413,6 +436,8 @@ public:
     virtual void CheckCandidate() {
         ERR("Headquarter::CheckCandidate() called.");
     }
+    
+    virtual ~Headquarter() {}
 };
 
 class RedHeadquarter : public Headquarter {
@@ -421,6 +446,8 @@ public:
     void Make();
     void March();
     // TODO #2 此函数是否需要使用 virtual
+    
+    virtual ~RedHeadquarter() {}
 };
 
 class BlueHeadquarter : public Headquarter {
@@ -433,6 +460,8 @@ public:
     void AddCandidate(Warrior * r);
     void CheckCandidate();
     // TODO #2 此函数是否需要使用 virtual
+    
+    virtual ~BlueHeadquarter() {}
 };
 
 void get_input();
@@ -483,24 +512,24 @@ Bomb::Bomb() {
 City::City(int id) {
     elements = 0;
     this -> id = id;
-    red = nullptr;
-    redcan = nullptr;
-    blue = nullptr;
-    east = nullptr;
-    west = nullptr;
+    red = NULL;
+    redcan = NULL;
+    blue = NULL;
+    east = NULL;
+    west = NULL;
     flag = ndef;
-    killer = nullptr;
-    killed = nullptr;
+    killer = NULL;
+    killed = NULL;
 }
 
 void City::Log(Warrior * kr, Warrior * kd) {
-    if (kr == nullptr && kd == nullptr) {
+    if (kr == NULL && kd == NULL) {
         LOG("Tie logged in city");
     }
-    if (kd == nullptr && kr != nullptr) {
+    if (kd == NULL && kr != NULL) {
         ERR("Only killer logged in city");
     }
-    if (kr == nullptr && kd != nullptr) {
+    if (kr == NULL && kd != NULL) {
         ERR("Only killed logged in city");
     }
     killer = kr;
@@ -527,7 +556,7 @@ City * City::GetWest() const {
 
 Warrior * City::GetRed() const {
 //    cerr << "***LOG City::GetRed() called");
-    if (this -> red == nullptr) {
+    if (this -> red == NULL) {
 //        cerr << "***LOG City::GetRed() called in a city without red warrior.");
     }
     return this -> red;
@@ -535,67 +564,67 @@ Warrior * City::GetRed() const {
 
 Warrior * City::GetBlue() const {
 //    cerr << "***LOG City::GetBlue() called");
-    if (this -> blue == nullptr) {
+    if (this -> blue == NULL) {
 //        cerr << "***LOG City::GetBlue() called in a city without blue warrior.");
     }
     return this -> blue;
 }
 
 void City::LionRun() {
-    if (red != nullptr &&red -> get_no() == lion) {
+    if (red != NULL && red -> get_no() == lion) {
         //        Lion * temp = (Lion *) red; // Down cast: 父类指针 cast 为子类指针
         if (red -> ShouldRun()) {
             // 狮子逃跑
             Clock.PrintTime();
             red -> PrintRun();
-            red = nullptr;
+            red = NULL;
         }
     }
-    if (blue != nullptr && blue -> get_no() == lion) {
+    if (blue != NULL && blue -> get_no() == lion) {
         //        Lion * temp = (Lion *) red; // Down cast: 父类指针 cast 为子类指针
         if (blue -> ShouldRun()) {
             // 狮子逃跑
             Clock.PrintTime();
             blue -> PrintRun();
-            blue = nullptr;
+            blue = NULL;
         }
         
     }
 }
 
 void City::RedMarch(Headquarter * enemyhead) {
-    if (red == nullptr) {
+    if (red == NULL) {
         return;
     }
-    if (east == nullptr && enemyhead != nullptr) {
+    if (east == NULL && enemyhead != NULL) {
 //        cerr << "***LOG The easternmost city called City::RedMarch()");
         enemyhead -> AddCandidate(red);
-        red = nullptr;
+        red = NULL;
         return;
     }
     if (red -> get_no() == iceman) {
         LOG("Some warrior melted");
         red -> Melt();
     }
-    east -> RedArrive(red);
-    red = nullptr;
+    if (east != NULL) east -> RedArrive(red);
+    red = NULL;
 }
 
 void City::RedArrive(Warrior *r) {
-    if (redcan != nullptr) {
+    if (redcan != NULL) {
         ERR("Red warrior arrived at a city with a red warrior already there");
     }
-    if (r == nullptr) {
+    if (r == NULL) {
         return;
     }
     redcan = r;
 }
 
 void City::CheckCandidate() {
-    if (redcan == nullptr) {
+    if (redcan == NULL) {
         return;
     }
-    if (red != nullptr) {
+    if (red != NULL) {
         ERR("redcan and red both occupied");
         return;
     }
@@ -608,31 +637,31 @@ void City::CheckCandidate() {
            this -> id,
            red -> get_element(),
            red -> get_force());
-    redcan = nullptr;
+    redcan = NULL;
 }
 
 void City::BlueMarch(Headquarter * enemyhead) {
-    if (blue == nullptr) {
+    if (blue == NULL) {
         return;
     }
-    if (west == nullptr && enemyhead != nullptr) {
+    if (west == NULL && enemyhead != NULL) {
         LOG("The westernmost city called City::BlueMarch()");
         enemyhead -> Occupied(blue);
-        blue = nullptr;
+        blue = NULL;
         return;
     }
     if (blue -> get_no() == iceman) {
         blue -> Melt();
     }
-    west -> BlueArrive(blue);
-    blue = nullptr;
+    if (west != NULL) west -> BlueArrive(blue);
+    blue = NULL;
 }
 
 void City::BlueArrive(Warrior *b) {
-    if (blue != nullptr) {
+    if (blue != NULL) {
         ERR("Blue warrior arrived at a city with a blue warrior already there");
     }
-    if (b == nullptr) {
+    if (b == NULL) {
         return;
     }
     // 000:10 red iceman 1 marched to city 1 with 20 elements and force 30
@@ -651,16 +680,16 @@ void City::Produce() {
 }
 
 void City::Dispense() {
-    Warrior * temp = nullptr;
-    if (red == nullptr) {
-        if (blue == nullptr) {
+    Warrior * temp = NULL;
+    if (red == NULL) {
+        if (blue == NULL) {
             LOG("No warriors in city so no dispense");
             return;
         }
         temp = blue;
     }
-    if (red != nullptr) {
-        if (blue != nullptr) {
+    if (red != NULL) {
+        if (blue != NULL) {
             LOG("Two warriors in city so no dispense");
             return;
         }
@@ -668,7 +697,7 @@ void City::Dispense() {
     }
     
     Clock.PrintTime();
-    if (temp == nullptr) {
+    if (temp == NULL) {
         ERR("temp is still null after checking");
     }
     // blue dragon 2 earned 10 elements for his headquarter
@@ -682,7 +711,7 @@ void City::Dispense() {
 }
 
 void City::UseArrow() {
-    if (red != nullptr && east != nullptr && east -> GetBlue() != nullptr) {
+    if (red != NULL && east != NULL && east -> GetBlue() != NULL) {
         Warrior * target = east -> GetBlue();
         if (red -> ArrowLeft() != 0) {
             Clock.PrintTime();
@@ -713,7 +742,7 @@ void City::UseArrow() {
             }
         }
     }
-    if (blue != nullptr && west != nullptr && west -> GetRed() != nullptr) {
+    if (blue != NULL && west != NULL && west -> GetRed() != NULL) {
         Warrior * target = west -> GetRed();
         if (blue -> ArrowLeft() != 0) {
             Clock.PrintTime();
@@ -748,7 +777,7 @@ void City::UseArrow() {
 
 
 void City::UseBomb() {
-    if (red == nullptr || blue == nullptr) {
+    if (red == NULL || blue == NULL) {
         return;
     }
     if (red -> get_element() < 0) {
@@ -762,7 +791,7 @@ void City::UseBomb() {
     }
     
     Warrior * attack;
-    Warrior * defense = nullptr;
+    Warrior * defense = NULL;
     if (flag == ndef) {
         if (id % 2 == 1) {
             attack = red;
@@ -794,8 +823,8 @@ void City::UseBomb() {
                    ColourName[attack -> get_colour()].c_str(),
                    WarriorName[attack -> get_no()].c_str(),
                    attack -> get_id());
-            red = nullptr;
-            blue = nullptr;
+            red = NULL;
+            blue = NULL;
         }
         return;
     }
@@ -811,20 +840,20 @@ void City::UseBomb() {
                    ColourName[defense -> get_colour()].c_str(),
                    WarriorName[defense -> get_no()].c_str(),
                    defense -> get_id());
-            red = nullptr;
-            blue = nullptr;
+            red = NULL;
+            blue = NULL;
         }
         return;
     }
 }
 
 void City::Combat() {
-    if (red == nullptr || blue == nullptr) {
-        Log(nullptr, nullptr);
+    if (red == NULL || blue == NULL) {
+        Log(NULL, NULL);
         return;
     }
     Warrior * attack;
-    Warrior * defense = nullptr;
+    Warrior * defense = NULL;
     if (flag == ndef) {
         if (id % 2 == 1) {
             attack = red;
@@ -856,7 +885,7 @@ void City::Combat() {
                this -> elements);
         
         if (red == attack) {
-            red = nullptr;
+            red = NULL;
             if (state == na || state == red1 || state == red2) {
                 state = blue1;
             }
@@ -872,7 +901,7 @@ void City::Combat() {
             }
         }
         if (blue == attack) {
-            blue = nullptr;
+            blue = NULL;
             if (state == na || state == blue1 || state == blue2) {
                 state = red1;
             }
@@ -915,7 +944,7 @@ void City::Combat() {
                this -> elements);
         
         if (red == defense) {
-            red = nullptr;
+            red = NULL;
             if (state == na || state == red1 || state == red2) {
                 state = blue1;
             }
@@ -931,7 +960,7 @@ void City::Combat() {
             }
         }
         if (blue == defense) {
-            blue = nullptr;
+            blue = NULL;
             if (state == na || state == blue1 || state == blue2) {
                 state = red1;
             }
@@ -1009,7 +1038,7 @@ void City::Combat() {
                    this -> elements);
             
             if (red == attack) {
-                red = nullptr;
+                red = NULL;
                 if (state == na || state == red1 || state == red2) {
                     state = blue1;
                 }
@@ -1025,7 +1054,7 @@ void City::Combat() {
                 }
             }
             if (blue == attack) {
-                blue = nullptr;
+                blue = NULL;
                 if (state == na || state == blue1 || state == blue2) {
                     state = red1;
                 }
@@ -1056,7 +1085,7 @@ void City::Combat() {
             }
         }
         else {
-            Log(nullptr, nullptr);
+            Log(NULL, NULL);
             
             if (state == red1 || state == blue1) {
                 state = na;
@@ -1103,7 +1132,7 @@ void City::Combat() {
                this -> elements);
         
         if (red == defense) {
-            red = nullptr;
+            red = NULL;
             if (state == na || state == red1 || state == red2) {
                 state = blue1;
             }
@@ -1119,7 +1148,7 @@ void City::Combat() {
             }
         }
         if (blue == defense) {
-            blue = nullptr;
+            blue = NULL;
             if (state == na || state == blue1 || state == blue2) {
                 state = red1;
             }
@@ -1160,7 +1189,7 @@ void City::Combat() {
 }
 
 void City::RedReportWeapon() {
-    if (red == nullptr) {
+    if (red == NULL) {
         return;
     }
     
@@ -1198,7 +1227,7 @@ void City::RedReportWeapon() {
 }
 
 void City::BlueReportWeapon() {
-    if (blue == nullptr) {
+    if (blue == NULL) {
         return;
     }
     
@@ -1236,7 +1265,7 @@ void City::BlueReportWeapon() {
 }
 
 bool City::AwardRed() {
-    if (killer != nullptr && killer -> get_colour() == cred) {
+    if (killer != NULL && killer -> get_colour() == cred) {
         killer -> Awarded();
         return true;
     }
@@ -1244,7 +1273,7 @@ bool City::AwardRed() {
 }
 
 bool City::AwardBlue() {
-    if (killer != nullptr && killer -> get_colour() == cblue) {
+    if (killer != NULL && killer -> get_colour() == cblue) {
         killer -> Awarded();
         return true;
     }
@@ -1252,7 +1281,7 @@ bool City::AwardBlue() {
 }
 
 int City::RedCollect() {
-    if (killer != nullptr && killer -> get_colour() == cred) {
+    if (killer != NULL && killer -> get_colour() == cred) {
         int temp = this -> elements;
         this -> elements = 0;
         return temp;
@@ -1261,7 +1290,7 @@ int City::RedCollect() {
 }
 
 int City::BlueCollect() {
-    if (killer != nullptr && killer -> get_colour() == cblue) {
+    if (killer != NULL && killer -> get_colour() == cblue) {
         int temp = this -> elements;
         this -> elements = 0;
         return temp;
@@ -1338,7 +1367,7 @@ Dragon::Dragon(int i, int l) {
 }
 
 int Dragon::ArrowLeft() {
-    if (weapon == nullptr) {
+    if (weapon == NULL) {
         return 0;
     }
     if (weapon -> GetNo() != arrow) {
@@ -1346,7 +1375,7 @@ int Dragon::ArrowLeft() {
     }
     // TODO Is down cast needed?
     if (weapon -> Left() == 0) {
-        weapon = nullptr;
+        weapon = NULL;
         return 0;
     }
     return weapon -> Left();
@@ -1360,14 +1389,14 @@ void Dragon::UseArrow() {
 }
 
 bool Dragon::HasBomb() {
-    if (weapon != nullptr && weapon -> GetNo() == bomb) {
+    if (weapon != NULL && weapon -> GetNo() == bomb) {
         return true;
     }
     return false;
 }
 
 int Dragon::AttackForce() {
-    if (weapon != nullptr && weapon -> GetNo() == sword) {
+    if (weapon != NULL && weapon -> GetNo() == sword) {
         Clock.PrintTime();
     }
     return this -> force;
@@ -1375,21 +1404,21 @@ int Dragon::AttackForce() {
 
 int Dragon::CounterForce() {
     Clock.PrintTime();
-    if (weapon != nullptr && weapon -> GetNo() == sword) {
+    if (weapon != NULL && weapon -> GetNo() == sword) {
         return this -> force / 2 + weapon -> SwordForce();
     }
     return this -> force / 2;
 }
 
 int Dragon::SwordForce() {
-    if (weapon != nullptr && weapon -> GetNo() == sword) {
+    if (weapon != NULL && weapon -> GetNo() == sword) {
         return weapon -> SwordForce();
     }
     return 0;
 }
 
 void Dragon::SwordBlunt() {
-    if (weapon != nullptr && weapon -> GetNo() == sword) {
+    if (weapon != NULL && weapon -> GetNo() == sword) {
         weapon -> Blunt();
     }
 }
@@ -1430,16 +1459,16 @@ Ninja::Ninja(int i) {
 }
 
 int Ninja::ArrowLeft() {
-    if (weapon1 != nullptr && weapon1 -> GetNo() == arrow) {
+    if (weapon1 != NULL && weapon1 -> GetNo() == arrow) {
         if (!weapon1 -> Left()) {
-            weapon1 = nullptr;
+            weapon1 = NULL;
             return 0;
         }
         return weapon1 -> Left();
     }
-    if (weapon2 != nullptr && weapon2 -> GetNo() == arrow) {
+    if (weapon2 != NULL && weapon2 -> GetNo() == arrow) {
         if (!weapon2 -> Left()) {
-            weapon2 = nullptr;
+            weapon2 = NULL;
             return 0;
         }
         return weapon2 -> Left();
@@ -1451,31 +1480,31 @@ void Ninja::UseArrow() {
     if (this -> ArrowLeft() == 0) {
         ERR("***ERR Arrow used when the warrior has none");
     }
-    if (weapon1 -> GetNo() == arrow) {
+    if (weapon1 != NULL && weapon1 -> GetNo() == arrow) {
         weapon1 -> Use();
         return;
     }
-    if (weapon2 -> GetNo() == arrow) {
+    if (weapon2 != NULL && weapon2 -> GetNo() == arrow) {
         weapon2 -> Use();
         return;
     }
 }
 
 bool Ninja::HasBomb() {
-    if (weapon1 != nullptr && weapon1 -> GetNo() == bomb) {
+    if (weapon1 != NULL && weapon1 -> GetNo() == bomb) {
         return true;
     }
-    if (weapon2 != nullptr && weapon2 -> GetNo() == bomb) {
+    if (weapon2 != NULL && weapon2 -> GetNo() == bomb) {
         return true;
     }
     return false;
 }
 
 int Ninja::AttackForce() {
-    if (weapon1 != nullptr && weapon1 -> GetNo() == sword) {
+    if (weapon1 != NULL && weapon1 -> GetNo() == sword) {
         return this -> force + weapon1 -> SwordForce();
     }
-    if (weapon2 != nullptr && weapon2 -> GetNo() == sword) {
+    if (weapon2 != NULL && weapon2 -> GetNo() == sword) {
         return this -> force + weapon2 -> SwordForce();
     }
     return this -> force;
@@ -1487,20 +1516,20 @@ int Ninja::CounterForce() {
 }
 
 int Ninja::SwordForce() {
-    if (weapon1 != nullptr && weapon1 -> GetNo() == sword) {
+    if (weapon1 != NULL && weapon1 -> GetNo() == sword) {
         return weapon1 -> SwordForce();
     }
-    if (weapon2 != nullptr && weapon2 -> GetNo() == sword) {
+    if (weapon2 != NULL && weapon2 -> GetNo() == sword) {
         return weapon2 -> SwordForce();
     }
     return 0;
 }
 
 void Ninja::SwordBlunt() {
-    if (weapon1 != nullptr && weapon1 -> GetNo() == sword) {
+    if (weapon1 != NULL && weapon1 -> GetNo() == sword) {
         weapon1 -> Blunt();
     }
-    if (weapon2 != nullptr && weapon2 -> GetNo() == sword) {
+    if (weapon2 != NULL && weapon2 -> GetNo() == sword) {
         weapon2 -> Blunt();
     }
 }
@@ -1528,14 +1557,14 @@ Iceman::Iceman(int i) {
 }
 
 int Iceman::ArrowLeft() {
-    if (weapon == nullptr) {
+    if (weapon == NULL) {
         return 0;
     }
     if (weapon -> GetNo() != arrow) {
         return 0;
     }
     if (!weapon -> Left()) {
-        weapon = nullptr;
+        weapon = NULL;
         return 0;
     }
     return weapon -> Left();
@@ -1549,35 +1578,35 @@ void Iceman::UseArrow() {
 }
 
 bool Iceman::HasBomb() {
-    if (weapon != nullptr && weapon -> GetNo() == bomb) {
+    if (weapon != NULL && weapon -> GetNo() == bomb) {
         return true;
     }
     return false;
 }
 
 int Iceman::AttackForce() {
-    if (weapon != nullptr && weapon -> GetNo() == sword) {
+    if (weapon != NULL && weapon -> GetNo() == sword) {
         return this -> force + weapon -> SwordForce();
     }
     return this -> force;
 }
 
 int Iceman::CounterForce() {
-    if (weapon != nullptr && weapon -> GetNo() == sword) {
+    if (weapon != NULL && weapon -> GetNo() == sword) {
         return this -> force / 2 + weapon -> SwordForce();
     }
     return this -> force / 2;
 }
 
 int Iceman::SwordForce() {
-    if (weapon != nullptr && weapon -> GetNo() == sword) {
+    if (weapon != NULL && weapon -> GetNo() == sword) {
         return weapon -> SwordForce();
     }
     return 0;
 }
 
 void Iceman::SwordBlunt() {
-    if (weapon != nullptr && weapon -> GetNo() == sword) {
+    if (weapon != NULL && weapon -> GetNo() == sword) {
         weapon -> Blunt();
     }
 }
@@ -1660,72 +1689,72 @@ Wolf::Wolf(int i) {
     
     id = i;
     
-    arrow = nullptr;
-    bomb = nullptr;
-    sword = nullptr;
+    arrow = NULL;
+    bomb = NULL;
+    sword = NULL;
 }
 
 int Wolf::ArrowLeft() {
-    if (arrow == nullptr) {
+    if (arrow == NULL) {
         return 0;
     }
     // TODO Is down cast needed?
     if (!arrow -> Left()) {
-        arrow = nullptr;
+        arrow = NULL;
         return 0;
     }
     return arrow -> Left();
 }
 
 void Wolf::UseArrow() {
-    if (this -> ArrowLeft() == 0) {
+    if (this -> ArrowLeft() == 0 || arrow == NULL) {
         ERR("Arrow used when the warrior has none");
     }
     arrow -> Use();
 }
 
 bool Wolf::HasBomb() {
-    return bomb != nullptr;
+    return bomb != NULL;
 }
 
 int Wolf::AttackForce() {
-    if (sword != nullptr) {
+    if (sword != NULL) {
         return this -> force + sword -> SwordForce();
     }
     return this -> force;
 }
 
 int Wolf::CounterForce() {
-    if (sword != nullptr) {
+    if (sword != NULL) {
         return this -> force / 2 + sword -> SwordForce();
     }
     return this -> force / 2;
 }
 
 int Wolf::SwordForce() {
-    if (sword != nullptr) {
+    if (sword != NULL) {
         return sword -> SwordForce();
     }
     return 0;
 }
 
 void Wolf::SwordBlunt() {
-    if (sword != nullptr) {
+    if (sword != NULL) {
         sword -> Blunt();
     }
 }
 
 void Wolf::GainWeapon(Warrior * w) {
-    if (w == nullptr) {
+    if (w == NULL) {
         return;
     }
-    if (w -> ArrowLeft() != 0 && this -> arrow == nullptr) {
+    if (w -> ArrowLeft() != 0 && this -> arrow == NULL) {
         this -> arrow = new Arrow(w -> ArrowLeft());
     }
-    if (w -> HasBomb() && this -> bomb == nullptr) {
+    if (w -> HasBomb() && this -> bomb == NULL) {
         this -> bomb = new Bomb();
     }
-    if (w -> SwordForce() != 0 && this -> sword == nullptr) {
+    if (w -> SwordForce() != 0 && this -> sword == NULL) {
         this -> sword = new Sword(w -> SwordForce() * 5); // Sword force is 20% of warrior force
     }
 }
@@ -1733,12 +1762,12 @@ void Wolf::GainWeapon(Warrior * w) {
 Headquarter::Headquarter(){
     CountAll = 0; // 总武士数
     LeftElements = Headquarter::init_elements;
-    warrior = nullptr;
-    enemy = nullptr;
+    warrior = NULL;
+    enemy = NULL;
 }
 
 void Headquarter::LionRun() {
-    if (warrior == nullptr) {
+    if (warrior == NULL) {
         return;
     }
     if (warrior -> get_no() == lion) {
@@ -1747,7 +1776,7 @@ void Headquarter::LionRun() {
             // 狮子逃跑
             Clock.PrintTime();
             temp -> PrintRun();
-            warrior = nullptr;
+            warrior = NULL;
         }
     }
 }
@@ -1761,10 +1790,10 @@ City * Headquarter::GetNeighbor() {
 }
 
 void Headquarter::Occupied(Warrior * enemy) {
-    if (enemy == nullptr) {
+    if (enemy == NULL) {
         return;
     }
-    if (this -> enemy == nullptr) {
+    if (this -> enemy == NULL) {
         LOG("One headquarter occupied by an enemy");
         Clock.PrintTime();
         printf("%s %s %d reached %s headquarter with %d elements and force %d\n",
@@ -1810,7 +1839,7 @@ void Headquarter::CollectElements(int e) {
 }
 
 void Headquarter::EnemyReportWeapon() {
-    if (enemy == nullptr) {
+    if (enemy == NULL) {
         return;
     }
     
@@ -1938,19 +1967,19 @@ void BlueHeadquarter::Make() {
 }
 
 void RedHeadquarter::March() {
-    neighbor -> RedArrive(warrior);
-    if (warrior != nullptr && warrior -> get_no() == iceman) {
+    if (neighbor != NULL) neighbor -> RedArrive(warrior);
+    if (warrior != NULL && warrior -> get_no() == iceman) {
         warrior -> Melt();
     }
-    this -> warrior = nullptr;
+    this -> warrior = NULL;
 }
 
 void BlueHeadquarter::March() {
-    neighbor -> BlueArrive(warrior);
-    if (warrior != nullptr && warrior -> get_no() == iceman) {
+    if (neighbor != NULL) neighbor -> BlueArrive(warrior);
+    if (warrior != NULL && warrior -> get_no() == iceman) {
         warrior -> Melt();
     }
-    this -> warrior = nullptr;
+    this -> warrior = NULL;
 }
 
 void BlueHeadquarter::AddCandidate(Warrior *r) {
@@ -1959,26 +1988,8 @@ void BlueHeadquarter::AddCandidate(Warrior *r) {
 
 void BlueHeadquarter::CheckCandidate() {
     Occupied(redcan);
-    redcan = nullptr;
+    redcan = NULL;
 }
-
-using namespace std;
-
-int Headquarter::init_elements;
-int Arrow::force;
-int Lion::loyalty_decrease;
-
-string WeaponName[3] = {"bomb", "arrow", "sword"};
-string WarriorName[5] = {"dragon", "ninja", "iceman", "lion", "wolf"};
-string ColourName[3] = {"*ndef*", "red", "blue"};
-int Elements[5];
-int Forces[5];
-
-int cities;
-int stop_time;
-bool stop;
-
-Time Clock = Time();
 
 //  全局时钟，随时输出时间，每次输出后时间流逝到下一个节点
 // Can define default param twice
@@ -2040,9 +2051,11 @@ int Time::get_minute() {
     return minute;
 }
 
+int Headquarter::init_elements;
+int Arrow::force;
+int Lion::loyalty_decrease;
 
-int main(int argc, const char * argv[]) {
-    
+int main(int argc, const char * argv[]) {    
     int cases;
     cin >> cases;
     for (int c = 1; c <= cases; c++) {
@@ -2056,14 +2069,14 @@ int main(int argc, const char * argv[]) {
         // 用链表存储所有城市
         City * first_city, * last_city, * current_city;
         last_city = first_city = new City(1);
-        first_city -> SetWest(nullptr);
+        first_city -> SetWest(NULL);
         for (int i = 2; i <= cities; i++) {
             current_city = new City(i); // 新建一个城市
             last_city -> SetEast(current_city); // 新城市是上一个城市东面的城市
             current_city -> SetWest(last_city); // 新城市的西面的城市是上一个城市
             last_city = current_city; // 新建的城市变成上一个城市
         }
-        last_city -> SetEast(nullptr);
+        last_city -> SetEast(NULL);
         
         red.SetNeighbor(first_city);
         blue.SetNeighbor(last_city);
@@ -2080,7 +2093,7 @@ int main(int argc, const char * argv[]) {
             if (Clock.get_minute() == 5) {
                 // lion run
                 red.LionRun();
-                for (City * city = red.GetNeighbor(); city != nullptr; city = city -> GetEast()) {
+                for (City * city = red.GetNeighbor(); city != NULL; city = city -> GetEast()) {
                     city -> LionRun();
                 }
                 blue.LionRun();
@@ -2090,7 +2103,7 @@ int main(int argc, const char * argv[]) {
                 // warriors march
                 if (!stop) red.March();
                 
-                for (City * city = red.GetNeighbor(); city != nullptr && !stop; city = city -> GetEast()) {
+                for (City * city = red.GetNeighbor(); city != NULL && !stop; city = city -> GetEast()) {
                     city -> BlueMarch(& red);
                     city -> RedMarch(& blue);
                     city -> CheckCandidate();
@@ -2103,7 +2116,7 @@ int main(int argc, const char * argv[]) {
             if (Clock.get_minute() == 20) {
                 // cities produce 10 elements
                 
-                for (City * city = red.GetNeighbor(); city != nullptr; city = city -> GetEast()) {
+                for (City * city = red.GetNeighbor(); city != NULL; city = city -> GetEast()) {
                     city -> Produce();
                 }
             }
@@ -2111,7 +2124,7 @@ int main(int argc, const char * argv[]) {
             if (Clock.get_minute() == 30) {
                 // warriors get elements in their cities
                 
-                for (City * city = red.GetNeighbor(); city != nullptr; city = city -> GetEast()) {
+                for (City * city = red.GetNeighbor(); city != NULL; city = city -> GetEast()) {
                     city -> Dispense();
                 }
             }
@@ -2119,7 +2132,7 @@ int main(int argc, const char * argv[]) {
             if (Clock.get_minute() == 35) {
                 // warriors use their arrows
                 
-                for (City * city = red.GetNeighbor(); city != nullptr; city = city -> GetEast()) {
+                for (City * city = red.GetNeighbor(); city != NULL; city = city -> GetEast()) {
                     city -> UseArrow();
                 }
             }
@@ -2127,7 +2140,7 @@ int main(int argc, const char * argv[]) {
             if (Clock.get_minute() == 38) {
                 // warriors use their bombs
                 
-                for (City * city = red.GetNeighbor(); city != nullptr; city = city -> GetEast()) {
+                for (City * city = red.GetNeighbor(); city != NULL; city = city -> GetEast()) {
                     city -> UseBomb();
                 }
             }
@@ -2138,19 +2151,19 @@ int main(int argc, const char * argv[]) {
                 // warriors are killed
                 // warriors yell
                 
-                for (City * city = red.GetNeighbor(); city != nullptr; city = city -> GetEast()) {
+                for (City * city = red.GetNeighbor(); city != NULL; city = city -> GetEast()) {
                     city -> Combat();
                 }
                 
                 // headquarters award warriors
-                for (City * city = red.GetNeighbor(); city -> GetEast() != nullptr; city = city -> GetEast()) {
+                for (City * city = red.GetNeighbor(); city -> GetEast() != NULL; city = city -> GetEast()) {
                     if (blue.GetElements() >= 8) {
                         if (city -> AwardBlue()) {
                             blue.UsedForAward();
                         }
                     }
                 }
-                for (City * city = blue.GetNeighbor(); city -> GetWest() != nullptr; city = city -> GetWest()) {
+                for (City * city = blue.GetNeighbor(); city -> GetWest() != NULL; city = city -> GetWest()) {
                     if (red.GetElements() >= 8) {
                         if (city -> AwardRed()) {
                             red.UsedForAward();
@@ -2159,7 +2172,7 @@ int main(int argc, const char * argv[]) {
                 }
                 
                 // headquarters collect elements
-                for (City * city = red.GetNeighbor(); city != nullptr; city = city -> GetEast()) {
+                for (City * city = red.GetNeighbor(); city != NULL; city = city -> GetEast()) {
                     red.CollectElements(city -> RedCollect());
                     blue.CollectElements(city -> BlueCollect());
                 }
@@ -2179,11 +2192,11 @@ int main(int argc, const char * argv[]) {
                 /// warriors report their weapons
                 
                 red.EnemyReportWeapon();
-                for (City * city = red.GetNeighbor(); city != nullptr; city = city -> GetEast()) {
+                for (City * city = red.GetNeighbor(); city != NULL; city = city -> GetEast()) {
                     city -> RedReportWeapon();
                 }
                 
-                for (City * city = red.GetNeighbor(); city != nullptr; city = city -> GetEast()) {
+                for (City * city = red.GetNeighbor(); city != NULL; city = city -> GetEast()) {
                     city -> BlueReportWeapon();
                 }
                 blue.EnemyReportWeapon();
@@ -2208,7 +2221,6 @@ void get_input() {
     
     //    cerr << "Stop at ? min");
     cin >> stop_time;
-    
     
     //    cerr << "Initial elements of dragon, ninja, iceman, lion and wolf");
     cin >> Elements[dragon] >> Elements[ninja] >> Elements[iceman] >> Elements[lion] >> Elements[wolf];
