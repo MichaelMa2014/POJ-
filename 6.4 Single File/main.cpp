@@ -206,7 +206,7 @@ public:
     
     void GetFromLion(int e);
     
-    virtual ~Warrior() {}
+    // virtual ~Warrior() {}
 };
 
 class Dragon : public Warrior {
@@ -234,7 +234,7 @@ public:
     
     virtual bool Yell();
     
-    virtual ~Dragon() {}
+    // virtual ~Dragon() {}
 };
 
 class Ninja : public Warrior {
@@ -257,7 +257,7 @@ public:
     virtual int SwordForce();
     virtual void SwordBlunt();
     
-    virtual ~Ninja() {}
+    // virtual ~Ninja() {}
 };
 
 class Iceman : public Warrior {
@@ -283,7 +283,7 @@ public:
     virtual int SwordForce();
     virtual void SwordBlunt();
     
-    virtual ~Iceman() {}
+    // virtual ~Iceman() {}
 };
 
 class Lion : public Warrior {
@@ -311,7 +311,7 @@ public:
     
     virtual void LoyaltyDown();
     
-    virtual ~Lion() {}
+    // virtual ~Lion() {}
 };
 
 class Wolf : public Warrior {
@@ -337,7 +337,7 @@ public:
     
     virtual void GainWeapon(Warrior * w);
     
-    virtual ~Wolf() {}
+    // virtual ~Wolf() {}
 };
 
 class City{
@@ -577,6 +577,7 @@ void City::LionRun() {
             // 狮子逃跑
             Clock.PrintTime();
             red -> PrintRun();
+            delete red;
             red = NULL;
         }
     }
@@ -586,6 +587,7 @@ void City::LionRun() {
             // 狮子逃跑
             Clock.PrintTime();
             blue -> PrintRun();
+            delete blue;
             blue = NULL;
         }
         
@@ -790,7 +792,7 @@ void City::UseBomb() {
         return;
     }
     
-    Warrior * attack;
+    Warrior * attack = NULL;
     Warrior * defense = NULL;
     if (flag == ndef) {
         if (id % 2 == 1) {
@@ -823,7 +825,9 @@ void City::UseBomb() {
                    ColourName[attack -> get_colour()].c_str(),
                    WarriorName[attack -> get_no()].c_str(),
                    attack -> get_id());
+            delete red;
             red = NULL;
+            delete blue;
             blue = NULL;
         }
         return;
@@ -840,7 +844,9 @@ void City::UseBomb() {
                    ColourName[defense -> get_colour()].c_str(),
                    WarriorName[defense -> get_no()].c_str(),
                    defense -> get_id());
+            delete red;
             red = NULL;
+            delete blue;
             blue = NULL;
         }
         return;
@@ -852,7 +858,7 @@ void City::Combat() {
         Log(NULL, NULL);
         return;
     }
-    Warrior * attack;
+    Warrior * attack = NULL;
     Warrior * defense = NULL;
     if (flag == ndef) {
         if (id % 2 == 1) {
@@ -873,9 +879,8 @@ void City::Combat() {
         defense = red;
     }
     
+    // attack was shot and killed
     if (attack -> get_element() < 0) {
-        // attack shot and killed
-        
         // 001:40 blue dragon 2 earned 10 elements for his headquarter
         Clock.PrintTime();
         printf("%s %s %d earned %d elements for his headquarter\n",
@@ -930,10 +935,11 @@ void City::Combat() {
         if (attack -> get_no() == lion) {
             defense -> GetFromLion(attack -> get_element() + defense -> CounterForce());
         }
+        delete attack;
         return;
     }
+    // defense was shot and killed
     if (defense -> get_element() < 0) {
-        // defense shot and killed
         
         // 001:40 blue dragon 2 earned 10 elements for his headquarter
         Clock.PrintTime();
@@ -944,6 +950,7 @@ void City::Combat() {
                this -> elements);
         
         if (red == defense) {
+            delete red;
             red = NULL;
             if (state == na || state == red1 || state == red2) {
                 state = blue1;
@@ -960,6 +967,7 @@ void City::Combat() {
             }
         }
         if (blue == defense) {
+            delete blue;
             blue = NULL;
             if (state == na || state == blue1 || state == blue2) {
                 state = red1;
@@ -989,6 +997,7 @@ void City::Combat() {
         if (defense -> get_no() == lion) {
             attack -> GetFromLion(defense -> get_element() + attack -> AttackForce());
         }
+        delete defense;
         return;
     }
     
@@ -1069,7 +1078,6 @@ void City::Combat() {
                     state = red2;
                 }
             }
-            
             Log(defense, attack);
             
             if (defense -> get_no() == dragon) {
@@ -1083,6 +1091,8 @@ void City::Combat() {
             if (attack -> get_no() == lion) {
                 defense -> GetFromLion(attack -> get_element() + defense -> CounterForce());
             }
+            
+            delete attack;
         }
         else {
             Log(NULL, NULL);
@@ -1185,6 +1195,8 @@ void City::Combat() {
         if (defense -> get_no() == lion) {
             attack -> GetFromLion(defense -> get_element() + attack -> AttackForce());
         }
+        
+        delete defense;
     }
 }
 
@@ -1375,6 +1387,7 @@ int Dragon::ArrowLeft() {
     }
     // TODO Is down cast needed?
     if (weapon -> Left() == 0) {
+        delete weapon;
         weapon = NULL;
         return 0;
     }
@@ -1383,7 +1396,7 @@ int Dragon::ArrowLeft() {
 
 void Dragon::UseArrow() {
     if (this -> ArrowLeft() == 0) {
-        ERR("***ERR Arrow used when the warrior has none");
+        ERR("Arrow used when the warrior has none");
     }
     weapon -> Use();
 }
@@ -1461,6 +1474,7 @@ Ninja::Ninja(int i) {
 int Ninja::ArrowLeft() {
     if (weapon1 != NULL && weapon1 -> GetNo() == arrow) {
         if (!weapon1 -> Left()) {
+            delete weapon1;
             weapon1 = NULL;
             return 0;
         }
@@ -1468,6 +1482,7 @@ int Ninja::ArrowLeft() {
     }
     if (weapon2 != NULL && weapon2 -> GetNo() == arrow) {
         if (!weapon2 -> Left()) {
+            delete weapon2;
             weapon2 = NULL;
             return 0;
         }
@@ -1564,6 +1579,7 @@ int Iceman::ArrowLeft() {
         return 0;
     }
     if (!weapon -> Left()) {
+        delete weapon;
         weapon = NULL;
         return 0;
     }
@@ -1700,6 +1716,7 @@ int Wolf::ArrowLeft() {
     }
     // TODO Is down cast needed?
     if (!arrow -> Left()) {
+        delete arrow;
         arrow = NULL;
         return 0;
     }
@@ -1776,6 +1793,7 @@ void Headquarter::LionRun() {
             // 狮子逃跑
             Clock.PrintTime();
             temp -> PrintRun();
+            delete warrior;
             warrior = NULL;
         }
     }
