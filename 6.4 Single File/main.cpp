@@ -31,7 +31,7 @@ bool stop;
 
 enum WeaponNo {bomb, arrow, sword};
 enum WarriorNo {dragon, ninja, iceman, lion, wolf};
-enum FlagState {na, red1, red2, blue1, blue2};
+enum FlagState {na, red1, blue1};
 
 enum Colour {ndef, cred, cblue};
 
@@ -861,6 +861,7 @@ void City::Combat() {
         return;
     }
     if (red == NULL || blue == NULL) {
+        Log(NULL);
         return;
     }
     
@@ -895,36 +896,32 @@ void City::Combat() {
                defense -> get_id(),
                this -> elements);
         
+        Log(defense);
+        
         if (red == attack) {
             red = NULL;
-            if (state == na || state == red1 || state == red2) {
+            if (state == na || state == red1) {
                 state = blue1;
             }
-            else if (state == blue1) {
+            else if (state == blue1 && flag != cblue) {
                 // 004:40 blue flag raised in city 4
                 Clock.PrintTime();
                 printf("blue flag raised in city %d\n", this -> id);
-                state = blue2;
+                state = na;
                 flag = cblue;
-            }
-            else if (state == blue2) {
-                state = blue2;
             }
         }
         if (blue == attack) {
             blue = NULL;
-            if (state == na || state == blue1 || state == blue2) {
+            if (state == na || state == blue1) {
                 state = red1;
             }
-            else if (state == red1) {
+            else if (state == red1 && flag != cred) {
                 // 004:40 blue flag raised in city 4
                 Clock.PrintTime();
                 printf("red flag raised in city %d\n", this -> id);
-                state = red2;
+                state = na;
                 flag = cred;
-            }
-            else if (state == red2) {
-                state = red2;
             }
         }
         
@@ -944,7 +941,6 @@ void City::Combat() {
     }
     // defense was shot and killed
     if (defense -> get_element() <= 0) {
-        
         if (attack -> get_no() == dragon) {
             attack -> MoraleUp();
             if (attack -> Yell()) {
@@ -965,36 +961,32 @@ void City::Combat() {
                attack -> get_id(),
                this -> elements);
         
+        Log(attack);
+        
         if (red == defense) {
             red = NULL;
-            if (state == na || state == red1 || state == red2) {
+            if (state == na || state == red1) {
                 state = blue1;
             }
-            else if (state == blue1) {
+            else if (state == blue1 && flag != cblue) {
                 // 004:40 blue flag raised in city 4
                 Clock.PrintTime();
                 printf("blue flag raised in city %d\n", this -> id);
-                state = blue2;
+                state = na;
                 flag = cblue;
-            }
-            else if (state == blue2) {
-                state = blue2;
             }
         }
         if (blue == defense) {
             blue = NULL;
-            if (state == na || state == blue1 || state == blue2) {
+            if (state == na || state == blue1) {
                 state = red1;
             }
-            else if (state == red1) {
+            else if (state == red1 && flag != cred) {
                 // 004:40 blue flag raised in city 4
                 Clock.PrintTime();
                 printf("red flag raised in city %d\n", this -> id);
-                state = red2;
+                state = na;
                 flag = cred;
-            }
-            else if (state == red2) {
-                state = red2;
             }
         }
         
@@ -1059,34 +1051,28 @@ void City::Combat() {
             
             if (red == attack) {
                 red = NULL;
-                if (state == na || state == red1 || state == red2) {
+                if (state == na || state == red1) {
                     state = blue1;
                 }
-                else if (state == blue1) {
+                else if (state == blue1 && flag != cblue) {
                     // 004:40 blue flag raised in city 4
                     Clock.PrintTime();
                     printf("blue flag raised in city %d\n", this -> id);
-                    state = blue2;
+                    state = na;
                     flag = cblue;
-                }
-                else if (state == blue2) {
-                    state = blue2;
                 }
             }
             if (blue == attack) {
                 blue = NULL;
-                if (state == na || state == blue1 || state == blue2) {
+                if (state == na || state == blue1) {
                     state = red1;
                 }
-                else if (state == red1) {
+                else if (state == red1 && flag != cred) {
                     // 004:40 blue flag raised in city 4
                     Clock.PrintTime();
                     printf("red flag raised in city %d\n", this -> id);
-                    state = red2;
+                    state = na;
                     flag = cred;
-                }
-                else if (state == red2) {
-                    state = red2;
                 }
             }
             Log(defense);
@@ -1108,9 +1094,7 @@ void City::Combat() {
         else {
             Log(NULL);
             
-            if (state == red1 || state == blue1) {
-                state = na;
-            }
+            state = na;
             
             if (attack -> get_no() == dragon) {
                 attack -> MoraleDown();
@@ -1166,34 +1150,28 @@ void City::Combat() {
         
         if (red == defense) {
             red = NULL;
-            if (state == na || state == red1 || state == red2) {
+            if (state == na || state == red1) {
                 state = blue1;
             }
-            else if (state == blue1) {
+            else if (state == blue1 && flag != cblue) {
                 // 004:40 blue flag raised in city 4
                 Clock.PrintTime();
                 printf("blue flag raised in city %d\n", this -> id);
-                state = blue2;
+                state = na;
                 flag = cblue;
-            }
-            else if (state == blue2) {
-                state = blue2;
             }
         }
         if (blue == defense) {
             blue = NULL;
-            if (state == na || state == blue1 || state == blue2) {
+            if (state == na || state == blue1) {
                 state = red1;
             }
-            else if (state == red1) {
+            else if (state == red1 && flag != cred) {
                 // 004:40 blue flag raised in city 4
                 Clock.PrintTime();
                 printf("red flag raised in city %d\n", this -> id);
-                state = red2;
+                state = na;
                 flag = cred;
-            }
-            else if (state == red2) {
-                state = red2;
             }
         }
         
@@ -1304,7 +1282,7 @@ bool City::AwardBlue() {
 }
 
 int City::RedCollect() {
-    if (killer != NULL && killer -> get_colour() == cred) {
+    if (killer == red && killer != NULL) {
         int temp = this -> elements;
         this -> elements = 0;
         return temp;
@@ -1313,7 +1291,7 @@ int City::RedCollect() {
 }
 
 int City::BlueCollect() {
-    if (killer != NULL && killer -> get_colour() == cblue) {
+    if (killer == blue && killer != NULL) {
         int temp = this -> elements;
         this -> elements = 0;
         return temp;
@@ -2200,14 +2178,14 @@ int main(int argc, const char * argv[]) {
                 }
                 
                 // headquarters award warriors
-                for (City * city = red.GetNeighbor(); city -> GetEast() != NULL; city = city -> GetEast()) {
+                for (City * city = red.GetNeighbor(); city != NULL; city = city -> GetEast()) {
                     if (blue.GetElements() >= 8) {
                         if (city -> AwardBlue()) {
                             blue.UsedForAward();
                         }
                     }
                 }
-                for (City * city = blue.GetNeighbor(); city -> GetWest() != NULL; city = city -> GetWest()) {
+                for (City * city = blue.GetNeighbor(); city != NULL; city = city -> GetWest()) {
                     if (red.GetElements() >= 8) {
                         if (city -> AwardRed()) {
                             red.UsedForAward();
