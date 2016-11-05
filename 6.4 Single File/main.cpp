@@ -180,7 +180,7 @@ public:
         ERR("Warrior::SwordBlunt() called.");
     }
     
-    void Attacked(int force);
+    virtual void Attacked(int force);
     
     virtual void MoraleUp() {
         ERR("Warrior::MoraleUp() called.");
@@ -203,6 +203,10 @@ public:
     }
     
     void Awarded();
+    
+    virtual int PreviousElement() {
+        ERR("Warrior::PreviousElement() called.");
+    }
     
     void GetFromLion(int e);
     
@@ -289,6 +293,7 @@ public:
 class Lion : public Warrior {
 private:
     int loyalty;
+    int previous;
 public:
     //    static int init_element;
     //    static int init_force;
@@ -310,6 +315,10 @@ public:
     virtual void SwordBlunt();
     
     virtual void LoyaltyDown();
+    
+    virtual void Attacked(int force);
+    
+    virtual int PreviousElement();
     
     // virtual ~Lion() {}
 };
@@ -352,10 +361,9 @@ private:
     City * west; // 西边的城市
     Colour flag;
     Warrior * killer;
-    Warrior * killed;
     FlagState state;
     
-    void Log(Warrior * kr, Warrior * kd);
+    void Log(Warrior * kr);
 public:
     City(int id);
     void SetEast(City * east);
@@ -519,21 +527,13 @@ City::City(int id) {
     west = NULL;
     flag = ndef;
     killer = NULL;
-    killed = NULL;
 }
 
-void City::Log(Warrior * kr, Warrior * kd) {
-    if (kr == NULL && kd == NULL) {
+void City::Log(Warrior * kr) {
+    if (kr == NULL) {
         LOG("Tie logged in city");
     }
-    if (kd == NULL && kr != NULL) {
-        ERR("Only killer logged in city");
-    }
-    if (kr == NULL && kd != NULL) {
-        ERR("Only killed logged in city");
-    }
     killer = kr;
-    killed = kd;
 }
 
 void City::SetEast(City * east) {
@@ -735,12 +735,7 @@ void City::UseArrow() {
                        WarriorName[target -> get_no()].c_str(),
                        target -> get_id());
                 target -> HitByArrow();
-                east -> Log(red, target);
-                // Wolves don't check log to gain weapon, so it has to happen here
                 red -> UseArrow();
-                if (red -> get_no() == wolf) {
-                    red -> GainWeapon(target);
-                }
             }
         }
     }
@@ -766,12 +761,7 @@ void City::UseArrow() {
                        WarriorName[target -> get_no()].c_str(),
                        target -> get_id());
                 target -> HitByArrow();
-                west -> Log(blue, target);
-                // Wolves don't check log to gain weapon, so it has to happen here
                 blue -> UseArrow();
-                if (blue -> get_no() == wolf) {
-                    blue -> GainWeapon(target);
-                }
             }
         }
     }
@@ -782,10 +772,10 @@ void City::UseBomb() {
     if (red == NULL || blue == NULL) {
         return;
     }
-    if (red -> get_element() < 0) {
+    if (red -> get_element() <= 0) {
         return;
     }
-    if (blue -> get_element() < 0) {
+    if (blue -> get_element() <= 0) {
         return;
     }
     if (!red -> HasBomb() && !blue -> HasBomb()) {
@@ -854,10 +844,26 @@ void City::UseBomb() {
 }
 
 void City::Combat() {
-    if (red == NULL || blue == NULL) {
-        Log(NULL, NULL);
+    if (red == NULL && blue == NULL) {
         return;
     }
+    if (red != NULL && blue != NULL && red -> get_element() <= 0 && blue -> get_element() <= 0) {
+        red = NULL;
+        blue = NULL;
+        return;
+    }
+    if (red != NULL && red -> get_element() <= 0 && blue == NULL) {
+        red = NULL;
+        return;
+    }
+    if (blue != NULL && blue -> get_element() <= 0 && red == NULL) {
+        blue = NULL;
+        return;
+    }
+    if (red == NULL || blue == NULL) {
+        return;
+    }
+    
     Warrior * attack = NULL;
     Warrior * defense = NULL;
     if (flag == ndef) {
@@ -880,7 +886,7 @@ void City::Combat() {
     }
     
     // attack was shot and killed
-    if (attack -> get_element() < 0) {
+    if (attack -> get_element() <= 0) {
         // 001:40 blue dragon 2 earned 10 elements for his headquarter
         Clock.PrintTime();
         printf("%s %s %d earned %d elements for his headquarter\n",
@@ -922,8 +928,6 @@ void City::Combat() {
             }
         }
         
-        Log(defense, attack);
-        
         if (defense -> get_no() == dragon) {
             defense -> MoraleUp();
         }
@@ -933,13 +937,25 @@ void City::Combat() {
         }
         
         if (attack -> get_no() == lion) {
-            defense -> GetFromLion(attack -> get_element() + defense -> CounterForce());
+            defense -> GetFromLion(attack -> PreviousElement());
         }
         delete attack;
         return;
     }
     // defense was shot and killed
-    if (defense -> get_element() < 0) {
+    if (defense -> get_element() <= 0) {
+        
+        if (attack -> get_no() == dragon) {
+            attack -> MoraleUp();
+            if (attack -> Yell()) {
+                // 003:40 blue dragon 2 yelled in city 4
+                Clock.PrintTime();
+                printf("%s dragon %d yelled in city %d\n",
+                       ColourName[attack -> get_colour()].c_str(),
+                       attack -> get_id(),
+                       this -> id);
+            }
+        }
         
         // 001:40 blue dragon 2 earned 10 elements for his headquarter
         Clock.PrintTime();
@@ -950,7 +966,6 @@ void City::Combat() {
                this -> elements);
         
         if (red == defense) {
-            delete red;
             red = NULL;
             if (state == na || state == red1 || state == red2) {
                 state = blue1;
@@ -967,7 +982,6 @@ void City::Combat() {
             }
         }
         if (blue == defense) {
-            delete blue;
             blue = NULL;
             if (state == na || state == blue1 || state == blue2) {
                 state = red1;
@@ -984,18 +998,12 @@ void City::Combat() {
             }
         }
         
-        Log(attack, defense);
-        
-        if (attack -> get_no() == dragon) {
-            attack -> MoraleUp();
-        }
-        
         if (attack -> get_no() == wolf) {
             attack -> GainWeapon(defense);
         }
         
         if (defense -> get_no() == lion) {
-            attack -> GetFromLion(defense -> get_element() + attack -> AttackForce());
+            attack -> GetFromLion(defense -> PreviousElement());
         }
         delete defense;
         return;
@@ -1018,17 +1026,20 @@ void City::Combat() {
     
     if (defense -> get_element() > 0) {
         // 001:40 blue dragon 2 fought back against red lion 2 in city 1
-        Clock.PrintTime();
-        printf("%s %s %d fought back against %s %s %d in city %d\n",
-               ColourName[defense -> get_colour()].c_str(),
-               WarriorName[defense -> get_no()].c_str(),
-               defense -> get_id(),
-               ColourName[attack -> get_colour()].c_str(),
-               WarriorName[attack -> get_no()].c_str(),
-               attack -> get_id(),
-               this -> id);
-        attack -> Attacked(defense -> CounterForce());
-        defense -> SwordBlunt();
+        if (defense -> get_no() != ninja) {
+            Clock.PrintTime();
+            printf("%s %s %d fought back against %s %s %d in city %d\n",
+                   ColourName[defense -> get_colour()].c_str(),
+                   WarriorName[defense -> get_no()].c_str(),
+                   defense -> get_id(),
+                   ColourName[attack -> get_colour()].c_str(),
+                   WarriorName[attack -> get_no()].c_str(),
+                   attack -> get_id(),
+                   this -> id);
+            attack -> Attacked(defense -> CounterForce());
+            defense -> SwordBlunt();
+
+        }
         if (attack -> get_element() <= 0) {
             // 001:40 red lion 2 was killed in city 1
             Clock.PrintTime();
@@ -1078,7 +1089,7 @@ void City::Combat() {
                     state = red2;
                 }
             }
-            Log(defense, attack);
+            Log(defense);
             
             if (defense -> get_no() == dragon) {
                 defense -> MoraleUp();
@@ -1089,13 +1100,13 @@ void City::Combat() {
             }
             
             if (attack -> get_no() == lion) {
-                defense -> GetFromLion(attack -> get_element() + defense -> CounterForce());
+                defense -> GetFromLion(attack -> PreviousElement());
             }
             
             delete attack;
         }
         else {
-            Log(NULL, NULL);
+            Log(NULL);
             
             if (state == red1 || state == blue1) {
                 state = na;
@@ -1132,6 +1143,18 @@ void City::Combat() {
                WarriorName[defense -> get_no()].c_str(),
                defense -> get_id(),
                this -> id);
+        
+        if (attack -> get_no() == dragon) {
+            attack -> MoraleUp();
+            if (attack -> Yell()) {
+                // 003:40 blue dragon 2 yelled in city 4
+                Clock.PrintTime();
+                printf("%s dragon %d yelled in city %d\n",
+                       ColourName[attack -> get_colour()].c_str(),
+                       attack -> get_id(),
+                       this -> id);
+            }
+        }
         
         // 001:40 blue dragon 2 earned 10 elements for his headquarter
         Clock.PrintTime();
@@ -1174,26 +1197,14 @@ void City::Combat() {
             }
         }
         
-        Log(attack, defense);
-        
-        if (attack -> get_no() == dragon) {
-            attack -> MoraleUp();
-            if (attack -> Yell()) {
-                // 003:40 blue dragon 2 yelled in city 4
-                Clock.PrintTime();
-                printf("%s dragon %d yelled in city %d\n",
-                       ColourName[attack -> get_colour()].c_str(),
-                       attack -> get_id(),
-                       this -> id);
-            }
-        }
+        Log(attack);
         
         if (attack -> get_no() == wolf) {
             attack -> GainWeapon(defense);
         }
         
         if (defense -> get_no() == lion) {
-            attack -> GetFromLion(defense -> get_element() + attack -> AttackForce());
+            attack -> GetFromLion(defense -> PreviousElement());
         }
         
         delete defense;
@@ -1277,16 +1288,16 @@ void City::BlueReportWeapon() {
 }
 
 bool City::AwardRed() {
-    if (killer != NULL && killer -> get_colour() == cred) {
-        killer -> Awarded();
+    if (killer == red && killer != NULL) {
+        red -> Awarded();
         return true;
     }
     return false;
 }
 
 bool City::AwardBlue() {
-    if (killer != NULL && killer -> get_colour() == cblue) {
-        killer -> Awarded();
+    if (killer == blue && killer != NULL) {
+        blue -> Awarded();
         return true;
     }
     return false;
@@ -1410,13 +1421,12 @@ bool Dragon::HasBomb() {
 
 int Dragon::AttackForce() {
     if (weapon != NULL && weapon -> GetNo() == sword) {
-        Clock.PrintTime();
+        return this -> force + weapon -> SwordForce();
     }
     return this -> force;
 }
 
 int Dragon::CounterForce() {
-    Clock.PrintTime();
     if (weapon != NULL && weapon -> GetNo() == sword) {
         return this -> force / 2 + weapon -> SwordForce();
     }
@@ -1649,6 +1659,7 @@ Lion::Lion(int i, int l) {
     no = lion;
     element = Elements[lion];
     force = Forces[lion];
+    previous = 0;
     
     id = i;
     loyalty = l;
@@ -1694,6 +1705,15 @@ void Lion::SwordBlunt() {
 
 void Lion::LoyaltyDown() {
     this -> loyalty -= loyalty_decrease;
+}
+
+void Lion::Attacked(int force) {
+    this -> previous = this -> element;
+    this -> element -= force;
+}
+
+int Lion::PreviousElement() {
+    return this -> previous;
 }
 
 Wolf::Wolf(int i) {
@@ -1902,6 +1922,8 @@ RedHeadquarter::RedHeadquarter() : Headquarter() {
 BlueHeadquarter::BlueHeadquarter() : Headquarter() {
     colour = cblue;
     CurrentWarrior = lion;
+    
+    redcan = NULL;
 }
 
 void RedHeadquarter::Make() {
@@ -1937,6 +1959,7 @@ void RedHeadquarter::Make() {
             case wolf:
                 warrior = new Wolf(CountAll);
                 CurrentWarrior = ninja;
+                break;
         }
         
         warrior -> SetColour(cred);
@@ -2019,6 +2042,9 @@ void Time::Clear() {
 }
 
 void Time::PrintTime() {
+    if (hour == 10 && minute == 40) {
+//        throw 0;
+    }
     printf("%03d:%02d ", hour, minute);
 }
 
@@ -2077,9 +2103,9 @@ int main(int argc, const char * argv[]) {
     int cases;
     cin >> cases;
     for (int c = 1; c <= cases; c++) {
-        printf("Case %d:\n", c);
-        
         get_input();
+        
+        printf("Case %d:\n", c);
         
         BlueHeadquarter blue;
         RedHeadquarter red;
@@ -2119,16 +2145,16 @@ int main(int argc, const char * argv[]) {
             
             if (Clock.get_minute() == 10) {
                 // warriors march
-                if (!stop) red.March();
+                red.March();
                 
-                for (City * city = red.GetNeighbor(); city != NULL && !stop; city = city -> GetEast()) {
+                for (City * city = red.GetNeighbor(); city != NULL; city = city -> GetEast()) {
                     city -> BlueMarch(& red);
                     city -> RedMarch(& blue);
                     city -> CheckCandidate();
                 }
                 
+                blue.March();
                 blue.CheckCandidate();
-                if (!stop) blue.March();
             }
             
             if (Clock.get_minute() == 20) {
@@ -2209,17 +2235,17 @@ int main(int argc, const char * argv[]) {
             if (Clock.get_minute() == 55) {
                 /// warriors report their weapons
                 
-                red.EnemyReportWeapon();
                 for (City * city = red.GetNeighbor(); city != NULL; city = city -> GetEast()) {
                     city -> RedReportWeapon();
                 }
+                blue.EnemyReportWeapon();
                 
+                red.EnemyReportWeapon();
                 for (City * city = red.GetNeighbor(); city != NULL; city = city -> GetEast()) {
                     city -> BlueReportWeapon();
                 }
-                blue.EnemyReportWeapon();
             }
-        }
+            }
     }
     return 0;
 }
