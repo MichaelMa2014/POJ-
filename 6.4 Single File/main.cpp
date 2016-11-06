@@ -400,8 +400,8 @@ public:
     
     int RedCollect();
     int BlueCollect();
-    
-    virtual ~City() {}
+
+    void CheckFlag(Warrior * winner);
 };
 
 class Headquarter{
@@ -527,6 +527,7 @@ City::City(int id) {
     west = NULL;
     flag = ndef;
     killer = NULL;
+    state = na;
 }
 
 void City::Log(Warrior * kr) {
@@ -600,6 +601,10 @@ void City::RedMarch(Headquarter * enemyhead) {
     }
     if (east == NULL && enemyhead != NULL) {
 //        cerr << "***LOG The easternmost city called City::RedMarch()");
+        if (red -> get_no() == iceman) {
+            LOG("Some warrior melted");
+            red -> Melt();
+        }
         enemyhead -> AddCandidate(red);
         red = NULL;
         return;
@@ -648,6 +653,10 @@ void City::BlueMarch(Headquarter * enemyhead) {
     }
     if (west == NULL && enemyhead != NULL) {
         LOG("The westernmost city called City::BlueMarch()");
+        if (blue -> get_no() == iceman) {
+            LOG("Some warrior melted");
+            blue -> Melt();
+        }
         enemyhead -> Occupied(blue);
         blue = NULL;
         return;
@@ -886,6 +895,10 @@ void City::Combat() {
         defense = red;
     }
     
+    if (attack == NULL || defense == NULL) {
+        throw 0;
+    }
+    
     // attack was shot and killed
     if (attack -> get_element() <= 0) {
         // 001:40 blue dragon 2 earned 10 elements for his headquarter
@@ -897,32 +910,13 @@ void City::Combat() {
                this -> elements);
         
         Log(defense);
+        CheckFlag(defense);
         
         if (red == attack) {
             red = NULL;
-            if (state == na || state == red1) {
-                state = blue1;
-            }
-            else if (state == blue1 && flag != cblue) {
-                // 004:40 blue flag raised in city 4
-                Clock.PrintTime();
-                printf("blue flag raised in city %d\n", this -> id);
-                state = na;
-                flag = cblue;
-            }
         }
         if (blue == attack) {
             blue = NULL;
-            if (state == na || state == blue1) {
-                state = red1;
-            }
-            else if (state == red1 && flag != cred) {
-                // 004:40 blue flag raised in city 4
-                Clock.PrintTime();
-                printf("red flag raised in city %d\n", this -> id);
-                state = na;
-                flag = cred;
-            }
         }
         
         if (defense -> get_no() == dragon) {
@@ -933,9 +927,6 @@ void City::Combat() {
             defense -> GainWeapon(attack);
         }
         
-        if (attack -> get_no() == lion) {
-            defense -> GetFromLion(attack -> PreviousElement());
-        }
         delete attack;
         return;
     }
@@ -963,40 +954,19 @@ void City::Combat() {
         
         Log(attack);
         
+        CheckFlag(attack);
+        
         if (red == defense) {
             red = NULL;
-            if (state == na || state == red1) {
-                state = blue1;
-            }
-            else if (state == blue1 && flag != cblue) {
-                // 004:40 blue flag raised in city 4
-                Clock.PrintTime();
-                printf("blue flag raised in city %d\n", this -> id);
-                state = na;
-                flag = cblue;
-            }
         }
         if (blue == defense) {
             blue = NULL;
-            if (state == na || state == blue1) {
-                state = red1;
-            }
-            else if (state == red1 && flag != cred) {
-                // 004:40 blue flag raised in city 4
-                Clock.PrintTime();
-                printf("red flag raised in city %d\n", this -> id);
-                state = na;
-                flag = cred;
-            }
         }
         
         if (attack -> get_no() == wolf) {
             attack -> GainWeapon(defense);
         }
-        
-        if (defense -> get_no() == lion) {
-            attack -> GetFromLion(defense -> PreviousElement());
-        }
+
         delete defense;
         return;
     }
@@ -1049,33 +1019,16 @@ void City::Combat() {
                    defense -> get_id(),
                    this -> elements);
             
+            Log(defense);
+            
+            CheckFlag(defense);
+            
             if (red == attack) {
                 red = NULL;
-                if (state == na || state == red1) {
-                    state = blue1;
-                }
-                else if (state == blue1 && flag != cblue) {
-                    // 004:40 blue flag raised in city 4
-                    Clock.PrintTime();
-                    printf("blue flag raised in city %d\n", this -> id);
-                    state = na;
-                    flag = cblue;
-                }
             }
             if (blue == attack) {
                 blue = NULL;
-                if (state == na || state == blue1) {
-                    state = red1;
-                }
-                else if (state == red1 && flag != cred) {
-                    // 004:40 blue flag raised in city 4
-                    Clock.PrintTime();
-                    printf("red flag raised in city %d\n", this -> id);
-                    state = na;
-                    flag = cred;
-                }
             }
-            Log(defense);
             
             if (defense -> get_no() == dragon) {
                 defense -> MoraleUp();
@@ -1094,7 +1047,7 @@ void City::Combat() {
         else {
             Log(NULL);
             
-            state = na;
+            CheckFlag(NULL);
             
             if (attack -> get_no() == dragon) {
                 attack -> MoraleDown();
@@ -1148,34 +1101,16 @@ void City::Combat() {
                attack -> get_id(),
                this -> elements);
         
+        Log(attack);
+        
+        CheckFlag(attack);
+        
         if (red == defense) {
             red = NULL;
-            if (state == na || state == red1) {
-                state = blue1;
-            }
-            else if (state == blue1 && flag != cblue) {
-                // 004:40 blue flag raised in city 4
-                Clock.PrintTime();
-                printf("blue flag raised in city %d\n", this -> id);
-                state = na;
-                flag = cblue;
-            }
         }
         if (blue == defense) {
             blue = NULL;
-            if (state == na || state == blue1) {
-                state = red1;
-            }
-            else if (state == red1 && flag != cred) {
-                // 004:40 blue flag raised in city 4
-                Clock.PrintTime();
-                printf("red flag raised in city %d\n", this -> id);
-                state = na;
-                flag = cred;
-            }
         }
-        
-        Log(attack);
         
         if (attack -> get_no() == wolf) {
             attack -> GainWeapon(defense);
@@ -1297,6 +1232,36 @@ int City::BlueCollect() {
         return temp;
     }
     return 0;
+}
+
+void City::CheckFlag(Warrior * winner) {
+    if (winner == NULL) {
+        state = na;
+    }
+    else if (red == winner) {
+        if (state == na || state == blue1) {
+            state = red1;
+        }
+        else if (state == red1 && flag != cred) {
+            // 004:40 blue flag raised in city 4
+            Clock.PrintTime();
+            printf("red flag raised in city %d\n", this -> id);
+            state = na;
+            flag = cred;
+        }
+    }
+    else if (blue == winner) {
+        if (state == na || state == red1) {
+            state = blue1;
+        }
+        else if (state == blue1 && flag != cblue) {
+            // 004:40 blue flag raised in city 4
+            Clock.PrintTime();
+            printf("blue flag raised in city %d\n", this -> id);
+            state = na;
+            flag = cblue;
+        }
+    }
 }
 
 WarriorNo Warrior::get_no() {
